@@ -963,30 +963,22 @@ def show_image():
     global dir_path, root, count, app, cnt, path_csv, path_txt, label_left, label_right
     global files, path1, file_num, item1, canvas1, img1, book_num, play_num, mode_v, device_v
     global img_width, img_height, wt, ht, scr_w
-    #img_url = 'C:/Users/urbtg/OneDrive/Documents/塚本寺田研究室/研究/実験2/system/背景.png'
+
     img_url = './背景5.png'
-    #img_url = abs_path + '背景4.png'
     scr_w, scr_h = pyautogui.size() #スクリーンサイズの取得
     print(scr_w, scr_h)
     # このPCのスクリーンサイズを基準にする
     # PCのスクリーンサイズと基準のスクリーンサイズの比を計算
     wt = int(scr_w / 1920)
     ht = int(scr_h / 1080)
-    #img = Image.open('C:/Users/urbtg/OneDrive/Documents/塚本寺田研究室/研究/実験2/system/背景.png')
     img = Image.open(img_url)
     img = img.resize((scr_w, scr_h))
     #img.save('C:/Users/urbtg/OneDrive/Documents/塚本寺田研究室/研究/実験2/system/背景_resize.png')
-    #bg_url = 'C:/Users/urbtg/OneDrive/Documents/塚本寺田研究室/研究/実験2/system/背景_resize.png'
     bg_url = './背景_resize.png'
-    #bg_url = abs_path + '背景_resize.png'
     img.save(bg_url)
-    #dir_path = 'C:/Users/urbtg/OneDrive/Documents/塚本寺田研究室/研究/実験2/system/Book/'
     dir_path = './Book/'
-    #dir_path = abs_path + 'Book/'
     path_txt = './log.txt'
-    #path_txt = abs_path + 'log.txt'
     path_csv = './record.csv'
-    #path_csv = abs_path + 'record.csv'
     print("Start")
 
     #GUIの設定
@@ -1057,8 +1049,6 @@ def show_image():
 
     img_url1 = path1 + files[count]
     print(img_url1)
-    #img_url2 = path1 + files[count + 1]
-    #print(img_url2)
  
     #画像読み込み(yourimage.jpgは任意の画像へのパスにすること)
     img1 = Image.open(img_url1)
@@ -1076,15 +1066,6 @@ def show_image():
     canvas1.place(x=400, y=150 * ht)
     item1 = canvas1.create_image(0, 0, image=img1, anchor=tk.NW)
 
-    #画像読み込み(yourimage.jpgは任意の画像へのパスにすること)
-    #img2 = Image.open(img_url2)
-    #img2 = ImageTk.PhotoImage(img2)
- 
-    #Canvasの用意
-    #canvas2 = tk.Canvas(bg = "black", width=img_width, height=img_height)
-    #canvas2.place(x=430, y=200)
-    #item2 = canvas2.create_image(0, 0, image=img2, anchor=tk.NW)
-
     # ページ番号を表示
     label_right = tk.Label(root, text=str(count + 1), font=("MSゴシック", "30"))
     label_right.place(x=900 / wt, y=45 * ht)
@@ -1099,12 +1080,9 @@ def show_image():
     app.mainloop()
     #root.mainloop()
 
-#path = 'C:/Users/urbtg/OneDrive/Documents/塚本寺田研究室/研究/実験2/uchida/page_1.mp4'
+
 path = './ページめくりv2_1_Trim.mp4'
-#path = './aniamation/ページめくり8_Trim.mp4'
-#path = abs_path + '/aniamation/ページめくりv2_1_Trim.mp4'
 bg_menu_url = './背景_menu.png'
-#bg_menu_url = abs_path + '背景_menu.png'
 #スレッドを立ててtkinterの画像表示を開始する
 #thread1 = threading.Thread(target=show_image)
 #thread1.start()
