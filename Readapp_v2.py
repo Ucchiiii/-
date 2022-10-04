@@ -84,6 +84,15 @@ play_num = 0
 server = 0
 FILE_PNG = 'qrcode.png'
 qrview_f = False
+n = 10
+sens = [0] * 10
+d_sum = 0
+i = 0
+ope_flag = False
+start_t = 0
+d_start = [0] * 2
+tleft = 0
+tright = 0
 
 class VideoPlayer(tk.Frame):
     def __init__(self,master):
@@ -196,6 +205,15 @@ def movie():
     #app1 = VideoPlayer(root)
     app1.VideoRead()
 
+def aver():
+    global ave, d_sum
+    d_sum = 0
+
+    for j in range(n):
+        d_sum += abs(sens[j])
+    
+    ave = d_sum / n
+
 def get_args():
     parser = argparse.ArgumentParser()
 
@@ -215,9 +233,9 @@ def event_new_client(client, server):
 
     print('Event New Client ' + client_address)
 
-    if qrview_f:
-        qr_win.destroy()
-        qrview_f = False
+    # if qrview_f:
+    #     qr_win.destroy()
+    #     qrview_f = False
 
 
 def event_client_left(client, server):
@@ -229,7 +247,7 @@ def event_client_left(client, server):
     print('Event Client Left ' + client_address)
 
 def event_message_received(client, server, message):
-    global app_ope, app_effect, csv_save, cnt, count, start_t, blink_count
+    global app_ope, app_effect, csv_save, cnt, count, start_t, blink_count, ave, i, sens, ope_flag, start_t, d_start, tleft, tright, canvas1
 
     json_data = json.loads(message)
 
@@ -292,7 +310,7 @@ def event_message_received(client, server, message):
     # sequenceNumber(seqNo)：0-255までの循環連番整数
     sequenceNumber = json_data.get('sequenceNumber')
 
-    print('sequenceNumber:' + str(sequenceNumber))
+    #print('sequenceNumber:' + str(sequenceNumber))
 
     #print('blinkSpeed:' + str(blinkSpeed))
     #print('blinkStrength:' + str(blinkStrength))
@@ -319,34 +337,84 @@ def event_message_received(client, server, message):
     page_next = False
     page_next_b = False # csv記録用変数
 
-    #瞬き操作検出（2回連続瞬きでページ送り）
-    if blinkSpeed > 0:
-        blink_count = blink_count + 1
-
-        if blink_count == 1:
-            start_t = time.perf_counter()
-            # ボタンの色を変更
-            app.button4['bg'] = '#DEF6DE'
-
-        elif blink_count == 2:
-            blink_count = 0
-            end_t = time.perf_counter()
-            time_dif = end_t - start_t
-            if time_dif < 2:
-                page_next = True
-                page_next_b = True
-            # ボタンの色を戻す
-            app.button4['bg'] = '#F2F2F2'
-
-
-    
-    # 自然な瞬きかどうかをチェック（瞬き後1秒経過するとblink_countを0に戻す）
+    # 毎ループ時間を計測
     t = time.perf_counter()
-    t_dif = t - start_t
-    if t_dif > 2:
-        blink_count = 0
-        # ボタンの色を戻す
-        app.button4['bg'] = '#F2F2F2'
+
+    if eyeMoveRight > 0:
+        tright = time.perf_counter()
+        sens.pop(0)
+        sens.insert(n - 1 , eyeMoveRight)
+        aver()
+    elif eyeMoveLeft > 2:
+        if t - tright > 2: # 右を向いてから2秒以上経過していたらtleftを更新
+            tleft = time.perf_counter()
+        #print(tleft)
+        sens.pop(0)
+        #sens.insert(n - 1, eyeMoveLeft)
+        sens.insert(n - 1, 0)
+        aver()
+    else:
+        sens.pop(0)
+        sens.insert(n - 1, 0)
+        aver()
+    
+    di_sum = 0
+
+    for j in range(n):
+        di_sum += (sens[j] - ave) ** 2
+        disp = round(di_sum / n, 2)
+    
+    #print(i)
+    # print(sens)
+    print(disp)
+
+    i += 1
+    if i == 10:
+        i = 0
+
+    #tleft = 0
+    # if eyeMoveLeft > 1:
+    #     tleft = t
+    tl_dif = t - tleft
+    print(t, tleft, tl_dif)
+
+    #トリガ動作検出
+    if tl_dif > 2:
+        if ope_flag != True and disp > 0.5:
+            #d_start[0] = d_start[1]
+            d_start[1] = time.perf_counter()
+            td_dif0 = t - d_start[0]
+            print(td_dif0)
+            if td_dif0 > 10: # 前のぺーじめくりから10秒経過していなければフラグがONにならない
+                ope_flag = True
+                # ボタンの色を変更
+                canvas1['bg'] = '#0000FF'
+                canvas1['bd'] = '2'
+
+        
+    if ope_flag:
+        if blinkSpeed > 0:
+            print('Enter1') # (JINS MEMEの右側のフレームの側面を見る) + 1回の瞬き
+            #blink_count = blink_count + 1
+            d_start[0] = time.perf_counter()
+            ope_flag = False
+            page_next = True
+            page_next_b = True
+            # ボタンの色を戻す
+            canvas1['bg'] = '#000000'
+            canvas1['bd'] = '1'
+
+        td_dif = t - d_start[1]
+
+        if td_dif > 5:
+            ope_flag = False
+            td_dif = 0
+            # ボタンの色を戻す
+            canvas1['bg'] = '#000000'
+            canvas1['bd'] = '1'
+    
+    
+    print('ope_flag =', ope_flag)
 
     if app_ope == True:
         if page_next == True:
@@ -398,7 +466,7 @@ def event_message_received(client, server, message):
         data.insert(19, noiseStatus)
         data.insert(20, fitError)
         data.insert(21, powerLeft)
-        print('blinkSpeed:' + str(blinkSpeed))
+        #print('blinkSpeed:' + str(blinkSpeed))
 
         #print(data)
         with open(filename, 'a', newline="") as f:
@@ -640,16 +708,12 @@ class MainWindow(tk.Frame):
 
     # メニュー画面を生成
     def btn_click_menu(self, bln):
-        global menu_win, bg_menu_url, mode_v, device_v, cb_bln, entry0, rd
+        global menu_win, bg_menu_url, mode_v, device_v, entry0, rd
         menu_win = tk.Toplevel()
         menu_win.geometry("800x700")
         menu_win.title("メニュー")
-        # ファイルを参照
-        #background = tk.PhotoImage(file=bg_menu_url)
         # Labelの作成
-        #bg = tk.Label(menu_win, image=background, width=700, height=500)
         bg = tk.Label(menu_win, width=800, height=700)
-        #bg.pack(fill="x")
         bg.place(x=0, y=0)
 
         page_lab = tk.Label(menu_win, text = "ページ変更", font=("MSゴシック", "15"))
@@ -875,7 +939,7 @@ class MainWindow(tk.Frame):
     # 次のページへ移動
     def book_next(self, bln):    
         # ファイルを参照
-        global canvas1, canvas2, count, item1, item2, img1, img2, file_num, path_csv, book_num
+        global canvas1, count, item1, img1, file_num, path_csv, book_num
 
         if count < file_num - 1: # 最後のページまで表示後は次へを押しても変化しない
             count = count + 1
@@ -912,13 +976,13 @@ class MainWindow(tk.Frame):
         #time.sleep(3) #3秒毎に切り替え
 
         # ページ番号を更新
-        label_right['text'] = str(count + 1)
-        label_left['text'] = str(file_num)
+        label_page['text'] = str(count + 1)
+        label_page_max['text'] = str(file_num)
 
     # 前のページに戻る
     def book_before(self, bln):
         # ファイルを参照
-        global canvas1, canvas2, count, item1, item2, img1, img2, path_csv, book_num, file_num, mode_v, device_v, play_num
+        global canvas1, count, item1, img1, path_csv, book_num, file_num, mode_v, device_v, play_num
 
         if count >= 1:
             count = count - 1
@@ -955,38 +1019,38 @@ class MainWindow(tk.Frame):
         #time.sleep(3) #3秒毎に切り替え
 
         # ページ番号を更新
-        label_right['text'] = str(count + 1)
-        label_left['text'] = str(file_num)
+        label_page['text'] = str(count + 1)
+        label_page_max['text'] = str(file_num)
 
 #画像を表示させるための関数定義
 def show_image():
-    global dir_path, root, count, app, cnt, path_csv, path_txt, label_left, label_right
+    global dir_path, root, count, app, cnt, path_csv, path_txt, label_page, label_page_max
     global files, path1, file_num, item1, canvas1, img1, book_num, play_num, mode_v, device_v
     global img_width, img_height, wt, ht, scr_w
 
-    img_url = './背景5.png'
+    img_path = './背景5.png'
     scr_w, scr_h = pyautogui.size() #スクリーンサイズの取得
     print(scr_w, scr_h)
     # このPCのスクリーンサイズを基準にする
     # PCのスクリーンサイズと基準のスクリーンサイズの比を計算
     wt = int(scr_w / 1920)
     ht = int(scr_h / 1080)
-    img = Image.open(img_url)
+    img = Image.open(img_path)
     img = img.resize((scr_w, scr_h))
     #img.save('C:/Users/urbtg/OneDrive/Documents/塚本寺田研究室/研究/実験2/system/背景_resize.png')
-    bg_url = './背景_resize.png'
-    img.save(bg_url)
+    bg_path = './背景_resize.png'
+    img.save(bg_path)
     dir_path = './Book/'
     path_txt = './log.txt'
     path_csv = './record.csv'
-    print("Start")
+    #print("Start")
 
     #GUIの設定
     root = tk.Tk()
 
     root.state('zoomed')
     # ファイルを参照
-    background = tk.PhotoImage(file=bg_url)
+    background = tk.PhotoImage(file=bg_path)
     # Labelの作成
     bg = tk.Label(root, image=background, width=scr_w, height=scr_h)
     #bg.pack(fill="x")
@@ -1047,11 +1111,11 @@ def show_image():
     print(count)
     # count = 0
 
-    img_url1 = path1 + files[count]
-    print(img_url1)
+    img_path1 = path1 + files[count]
+    print(img_path1)
  
     #画像読み込み(yourimage.jpgは任意の画像へのパスにすること)
-    img1 = Image.open(img_url1)
+    img1 = Image.open(img_path1)
     img_h, img_w = img1.height, img1.width
     t = img_w / img_h
     hi = 803 * ht
@@ -1062,16 +1126,16 @@ def show_image():
     img1 = ImageTk.PhotoImage(img1)
  
     #Canvasの用意
-    canvas1 = tk.Canvas(bg = "black", width=img_width, height=img_height)
+    canvas1 = tk.Canvas(bg = "black", bd = '1', width=img_width, height=img_height)
     canvas1.place(x=400, y=150 * ht)
     item1 = canvas1.create_image(0, 0, image=img1, anchor=tk.NW)
 
     # ページ番号を表示
-    label_right = tk.Label(root, text=str(count + 1), font=("MSゴシック", "30"))
-    label_right.place(x=900 / wt, y=45 * ht)
+    label_page = tk.Label(root, text=str(count + 1), font=("MSゴシック", "30"))
+    label_page.place(x=900 / wt, y=45 * ht)
 
-    label_left = tk.Label(root, text=str(file_num), font=("MSゴシック", "30"))
-    label_left.place(x=1080 * wt, y=45 * ht)
+    label_page_max = tk.Label(root, text=str(file_num), font=("MSゴシック", "30"))
+    label_page_max.place(x=1080 * wt, y=45 * ht)
 
     #count = count + 2
  
