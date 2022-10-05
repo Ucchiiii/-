@@ -29,6 +29,15 @@
 # サーバー番号が変更されたときに登録しやすいように，QRコードを表示するボタンを作成
 # QRコードはサーバー番号に合わせて自動生成
 # アプリを開いたときに表示されるページを前回閉じたページに変更
+# 2022/10/06更新
+# 画像を変更
+# 以下のサイトからテキストファイルをpdfに変換し，さらにpngに変換
+# https://syosetu.com/man/txtdl
+# https://shimeken.com/tex
+# https://pdf2png.com/ja/
+# https://www.iloveimg.com/ja/resize-image
+# それに合わせてcanvasのサイズとアニメーションを変更
+# 「次へ」「戻る」ボタンのサイズも変更
 
 from doctest import master
 from email.mime import image
@@ -180,7 +189,7 @@ class VideoPlayer(tk.Frame):
                 image=self.photo_image  # 表示画像データ
             )
 
-            self.canvas.place(x=400, y=150 * ht)
+            self.canvas.place(x=670, y=150 * ht)
 
             # disp_image()を10msec後に実行する
             self.disp_id = self.after(10, self.disp_image)
@@ -597,18 +606,18 @@ class MainWindow(tk.Frame):
         self.label2.place(x=1870 * wt, y=20 * ht)
 
         self.button4 = tk.Button(
-            master, text='次へ', font=("MSゴシック", "20", "bold"), width=14, height=17, bg='#F2F2F2',
+            master, text='次へ', font=("MSゴシック", "20", "bold"), width=24, height=17, bg='#F2F2F2',
             borderwidth=0,
             command=lambda: self.book_next(True)
         )
         self.button4.place(x=30, y=150 * ht)
 
         self.button5 = tk.Button(
-            master, text='戻る', font=("MSゴシック", "20", "bold"), width=14, height=17, bg='#F2F2F2', 
+            master, text='戻る', font=("MSゴシック", "20", "bold"), width=23, height=17, bg='#F2F2F2', 
             borderwidth=0, 
             command=lambda: self.book_before(True)
         )
-        self.button5.place(x=1550 * wt, y=150 * ht)
+        self.button5.place(x=1300 * wt, y=150 * ht)
 
         # QRコード表示用ボタン
         self.button6 = tk.Button(
@@ -1122,12 +1131,13 @@ def show_image():
     wi = int(803 * t * ht)
     print(wi, hi)
     img1 = img1.resize((wi, hi))
+    img1.save('resized_img.png', quality = 90)
     img_width, img_height = img1.width, img1.height
     img1 = ImageTk.PhotoImage(img1)
  
     #Canvasの用意
     canvas1 = tk.Canvas(bg = "black", bd = '1', width=img_width, height=img_height)
-    canvas1.place(x=400, y=150 * ht)
+    canvas1.place(x=670, y=150 * ht)
     item1 = canvas1.create_image(0, 0, image=img1, anchor=tk.NW)
 
     # ページ番号を表示
@@ -1145,7 +1155,7 @@ def show_image():
     #root.mainloop()
 
 
-path = './ページめくりv2_1_Trim.mp4'
+path = './ページめくりv3_Trim.mp4'
 bg_menu_url = './背景_menu.png'
 #スレッドを立ててtkinterの画像表示を開始する
 #thread1 = threading.Thread(target=show_image)
